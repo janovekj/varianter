@@ -56,7 +56,7 @@ type VariantCreatorMap<T extends VariantMap> = {
       >;
 };
 
-const createVariant = <T extends VariantMap>(): VariantCreatorMap<T> => {
+export const createVariant = <T extends VariantMap>(): VariantCreatorMap<T> => {
   return new Proxy(
     {},
     {
