@@ -6,7 +6,8 @@ type UnionToIntersection<U> = (U extends any
   ? I
   : never;
 
-type UnionToVariantMap<
+// helper
+export type UnionToVariantMap<
   U extends { [key: string]: any },
   C extends keyof U
 > = Expand<
@@ -29,18 +30,18 @@ type VariantData<T extends VariantMap> = Expand<
   }[keyof T]
 >;
 
-type GetVariantMap<T extends VariantMap> =
+type MapVariantMapLike<T extends VariantMap> =
   | MapVariantMap<T>
   | (Partial<MapVariantMap<T>> & { _: (data: VariantData<T>) => any });
 
-type GetVariant<T extends VariantMap> = <M extends GetVariantMap<T>>(
+type MapVariant<T extends VariantMap> = <M extends MapVariantMapLike<T>>(
   map: M
 ) => {
   [K in keyof M]: M[K] extends (...args: any) => any ? ReturnType<M[K]> : never;
 }[keyof M];
 
 type VariantMethods<T extends VariantMap> = {
-  map: GetVariant<T>;
+  map: MapVariant<T>;
 };
 
 type VariantCreatorMap<T extends VariantMap> = {
@@ -57,18 +58,35 @@ type VariantCreatorMap<T extends VariantMap> = {
 };
 
 export const createVariant = <T extends VariantMap>(): VariantCreatorMap<T> => {
+  const map = (prop: keyof T, data: any): MapVariant<T> => variantMap => {
+    if (prop in variantMap) {
+      const a = variantMap[prop];
+      const result = a!(data);
+      return result;
+    } else if ("_" in variantMap) {
+      return variantMap["_"](data);
+    } else {
+      throw new Error(
+        "Property doesn't exist in variant, and no fallthrough was specified"
+      );
+    }
+  };
+
   return new Proxy(
     {},
     {
       get: (_, prop) => (data: any) => ({
         variant: prop,
         data,
+        // @ts-ignore
+        map: map(prop, data),
       }),
     }
   ) as VariantCreatorMap<T>;
 };
 
-type Member<T extends VariantCreatorMap<any>> = Expand<
+// helper
+export type Member<T extends VariantCreatorMap<any>> = Expand<
   {
     [K in keyof T]: ReturnType<T[K]>;
   }[keyof T]
