@@ -1,7 +1,7 @@
 import { createVariant, Member } from "../src/index";
 
 test("createVariant", () => {
-  const User = createVariant<{
+  const user = createVariant<{
     anonymous: {
       generatedId: string;
     };
@@ -16,7 +16,7 @@ test("createVariant", () => {
     };
   }>();
 
-  const anon = User.anonymous({ generatedId: "123123" });
+  const anon = user.anonymous({ generatedId: "123123" });
 
   const result = anon.map({
     anonymous: () => "correct",
@@ -44,7 +44,7 @@ test("state machine reducer example", () => {
     password: string;
   };
 
-  const FetchUserState = createVariant<{
+  const fetchUserState = createVariant<{
     idle: never;
     fetching: {
       credentials: UserCredentials;
@@ -57,15 +57,15 @@ test("state machine reducer example", () => {
     };
   }>();
 
-  type FetchUserState = Member<typeof FetchUserState>;
+  type FetchUserState = Member<typeof fetchUserState>;
 
-  const FetchUserAction = createVariant<{
+  const fetchUserAction = createVariant<{
     fetch: { username: string; password: string };
     success: User;
     fail: string;
   }>();
 
-  type FetchUserAction = Member<typeof FetchUserAction>;
+  type FetchUserAction = Member<typeof fetchUserAction>;
 
   const fetchUserReducer = (
     state: FetchUserState,
@@ -74,27 +74,27 @@ test("state machine reducer example", () => {
     state.map({
       idle: () =>
         action.map({
-          fetch: credentials => FetchUserState.fetching({ credentials }),
+          fetch: credentials => fetchUserState.fetching({ credentials }),
           _: () => state,
         }),
       fetching: () =>
         action.map({
-          success: user => FetchUserState.successful({ user }),
-          fail: error => FetchUserState.failed({ error }),
+          success: user => fetchUserState.successful({ user }),
+          fail: error => fetchUserState.failed({ error }),
           _: () => state,
         }),
       _: () => state,
     });
 
-  const initialState = FetchUserState.idle();
+  const initialState = fetchUserState.idle();
 
   expect(
-    fetchUserReducer(initialState, FetchUserAction.fail("error")).variant
+    fetchUserReducer(initialState, fetchUserAction.fail("error")).variant
   ).toBe("idle");
 
   const fetchingState = fetchUserReducer(
     initialState,
-    FetchUserAction.fetch({
+    fetchUserAction.fetch({
       username: "testusername",
       password: "testpassword",
     })
@@ -107,7 +107,7 @@ test("state machine reducer example", () => {
 
   const successState = fetchUserReducer(
     fetchingState,
-    FetchUserAction.success({ id: "test" })
+    fetchUserAction.success({ id: "test" })
   );
   expect(successState.variant).toBe("successful");
   // @ts-ignore
@@ -115,7 +115,7 @@ test("state machine reducer example", () => {
 
   const failedState = fetchUserReducer(
     fetchingState,
-    FetchUserAction.fail("error")
+    fetchUserAction.fail("error")
   );
   expect(failedState.variant).toBe("failed");
   // @ts-ignore
