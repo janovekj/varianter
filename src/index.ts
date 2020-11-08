@@ -57,6 +57,8 @@ type VariantCreatorMap<T extends VariantMap> = {
       >;
 };
 
+export type Variant<T extends VariantMap> = VariantCreatorMap<T>;
+
 export const createVariant = <T extends VariantMap>(): VariantCreatorMap<T> => {
   const map = (prop: keyof T, data: any): MapVariant<T> => (variantMap) => {
     const fn = variantMap[prop] ?? variantMap["_"];
@@ -79,6 +81,22 @@ export const createVariant = <T extends VariantMap>(): VariantCreatorMap<T> => {
       }),
     }
   ) as VariantCreatorMap<T>;
+};
+
+export type MemberObject<T extends VariantMap> = {
+  [K in keyof T]: {
+    type: K;
+    data: T[K];
+  };
+}[keyof T];
+
+export const from = <T extends VariantMap>({
+  type,
+  data,
+}: MemberObject<T>): Member<VariantCreatorMap<T>> => {
+  const variant = createVariant<T>();
+  const member = variant[type](data) as Member<VariantCreatorMap<T>>;
+  return member;
 };
 
 // helper

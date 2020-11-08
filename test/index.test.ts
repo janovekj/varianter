@@ -1,4 +1,4 @@
-import { createVariant, Member } from "../src/index";
+import { createVariant, from, Member } from "../src/index";
 import { suite } from "uvu";
 import * as assert from "uvu/assert";
 
@@ -146,3 +146,61 @@ createVariantSuite("state machine reducer example", () => {
 });
 
 createVariantSuite.run();
+
+const fromSuite = suite("from");
+
+fromSuite("from", () => {
+  type User = {
+    anonymous: {
+      generatedId: string;
+    };
+    regular: {
+      id: string;
+      name: string;
+    };
+    admin: {
+      id: string;
+      name: string;
+      permissions: string[];
+    };
+  };
+
+  const user = from<User>({
+    type: "admin",
+    data: {
+      id: "testid",
+      name: "testname",
+      permissions: ["testpermission"],
+    },
+  });
+
+  user.map({
+    admin: (data) =>
+      assert.equal(data, {
+        id: "testid",
+        name: "testname",
+        permissions: ["testpermission"],
+      }),
+    _: () => assert.unreachable(),
+  });
+
+  const somethingElse = from({
+    type: "somethingElse" as const,
+    data: {
+      testProperty: "testValue",
+    },
+  });
+
+  somethingElse.map({
+    _: (data) =>
+      assert.equal(
+        data,
+        {
+          testProperty: "testValue",
+        },
+        "'invalid' properties are also handled"
+      ),
+  });
+});
+
+fromSuite.run();
