@@ -89,7 +89,7 @@ test("state machine reducer example", () => {
   const initialState = fetchUserState.idle();
 
   expect(
-    fetchUserReducer(initialState, fetchUserAction.fail("error")).variant
+    fetchUserReducer(initialState, fetchUserAction.fail("error")).type
   ).toBe("idle");
 
   const fetchingState = fetchUserReducer(
@@ -99,7 +99,7 @@ test("state machine reducer example", () => {
       password: "testpassword",
     })
   );
-  expect(fetchingState.variant).toBe("fetching");
+  expect(fetchingState.type).toBe("fetching");
   //@ts-ignore
   expect(fetchingState.data).toStrictEqual({
     credentials: { username: "testusername", password: "testpassword" },
@@ -109,7 +109,7 @@ test("state machine reducer example", () => {
     fetchingState,
     fetchUserAction.success({ id: "test" })
   );
-  expect(successState.variant).toBe("successful");
+  expect(successState.type).toBe("successful");
   // @ts-ignore
   expect(successState.data).toStrictEqual({ user: { id: "test" } });
 
@@ -117,7 +117,7 @@ test("state machine reducer example", () => {
     fetchingState,
     fetchUserAction.fail("error")
   );
-  expect(failedState.variant).toBe("failed");
+  expect(failedState.type).toBe("failed");
   // @ts-ignore
   expect(failedState.data).toStrictEqual({ error: "error" });
 });

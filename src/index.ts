@@ -46,12 +46,12 @@ type VariantMethods<T extends VariantMap> = {
 
 type VariantCreatorMap<T extends VariantMap> = {
   [K in keyof T]: [T[K]] extends [never]
-    ? () => Expand<{ variant: K } & VariantMethods<T>>
+    ? () => Expand<{ type: K } & VariantMethods<T>>
     : (
         data: T[K]
       ) => Expand<
         {
-          variant: K;
+          type: K;
           data: T[K];
         } & VariantMethods<T>
       >;
