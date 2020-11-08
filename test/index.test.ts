@@ -1,6 +1,10 @@
 import { createVariant, Member } from "../src/index";
+import { suite } from "uvu";
+import * as assert from "uvu/assert";
 
-test("createVariant", () => {
+const createVariantSuite = suite("createVariant");
+
+createVariantSuite("default", () => {
   const user = createVariant<{
     anonymous: {
       generatedId: string;
@@ -24,17 +28,17 @@ test("createVariant", () => {
     regular: () => "wrong",
   });
 
-  expect(result).toBe("correct");
+  assert.is(result, "correct");
 
   const result2 = anon.map({
     admin: () => "wrong",
     _: () => "correct",
   });
 
-  expect(result2).toBe("correct");
+  assert.is(result2, "correct");
 });
 
-test("state machine reducer example", () => {
+createVariantSuite("state machine reducer example", () => {
   type User = {
     id: string;
   };
@@ -74,13 +78,13 @@ test("state machine reducer example", () => {
     state.map({
       idle: () =>
         action.map({
-          fetch: credentials => fetchUserState.fetching({ credentials }),
+          fetch: (credentials) => fetchUserState.fetching({ credentials }),
           _: () => state,
         }),
       fetching: () =>
         action.map({
-          success: user => fetchUserState.successful({ user }),
-          fail: error => fetchUserState.failed({ error }),
+          success: (user) => fetchUserState.successful({ user }),
+          fail: (error) => fetchUserState.failed({ error }),
           _: () => state,
         }),
       _: () => state,
@@ -88,9 +92,10 @@ test("state machine reducer example", () => {
 
   const initialState = fetchUserState.idle();
 
-  expect(
-    fetchUserReducer(initialState, fetchUserAction.fail("error")).type
-  ).toBe("idle");
+  assert.is(
+    fetchUserReducer(initialState, fetchUserAction.fail("error")).type,
+    "idle"
+  );
 
   const fetchingState = fetchUserReducer(
     initialState,
@@ -99,25 +104,45 @@ test("state machine reducer example", () => {
       password: "testpassword",
     })
   );
-  expect(fetchingState.type).toBe("fetching");
-  //@ts-ignore
-  expect(fetchingState.data).toStrictEqual({
-    credentials: { username: "testusername", password: "testpassword" },
+
+  fetchingState.map({
+    fetching: (data) =>
+      assert.equal(
+        data.credentials,
+        {
+          username: "testusername",
+          password: "testpassword",
+        },
+        "credentials are defined on the fetching variant"
+      ),
+    _: () => assert.unreachable("is in the fetching state"),
   });
 
   const successState = fetchUserReducer(
     fetchingState,
     fetchUserAction.success({ id: "test" })
   );
-  expect(successState.type).toBe("successful");
-  // @ts-ignore
-  expect(successState.data).toStrictEqual({ user: { id: "test" } });
+
+  successState.map({
+    successful: (data) =>
+      assert.equal(
+        data.user,
+        { id: "test" },
+        "user object is defined on the success variant"
+      ),
+    _: () => assert.unreachable("is in the success state"),
+  });
 
   const failedState = fetchUserReducer(
     fetchingState,
     fetchUserAction.fail("error")
   );
-  expect(failedState.type).toBe("failed");
-  // @ts-ignore
-  expect(failedState.data).toStrictEqual({ error: "error" });
+
+  failedState.map({
+    failed: (data) =>
+      assert.is(data.error, "error", "error is defined on the failed variant"),
+    _: () => assert.unreachable("is in the failed state"),
+  });
 });
+
+createVariantSuite.run();

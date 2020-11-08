@@ -1,8 +1,8 @@
 type Expand<T> = T extends infer O ? { [K in keyof O]: O[K] } : never;
 
-type UnionToIntersection<U> = (U extends any
-? (k: U) => void
-: never) extends (k: infer I) => void
+type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
+  k: infer I
+) => void
   ? I
   : never;
 
@@ -58,13 +58,10 @@ type VariantCreatorMap<T extends VariantMap> = {
 };
 
 export const createVariant = <T extends VariantMap>(): VariantCreatorMap<T> => {
-  const map = (prop: keyof T, data: any): MapVariant<T> => variantMap => {
-    if (prop in variantMap) {
-      const a = variantMap[prop];
-      const result = a!(data);
-      return result;
-    } else if ("_" in variantMap) {
-      return variantMap["_"](data);
+  const map = (prop: keyof T, data: any): MapVariant<T> => (variantMap) => {
+    const fn = variantMap[prop] ?? variantMap["_"];
+    if (fn) {
+      return fn(data);
     } else {
       throw new Error(
         "Property doesn't exist in variant, and no fallthrough was specified"
@@ -75,10 +72,9 @@ export const createVariant = <T extends VariantMap>(): VariantCreatorMap<T> => {
   return new Proxy(
     {},
     {
-      get: (_, prop) => (data: any) => ({
-        variant: prop,
+      get: (_, prop: keyof T) => (data: any) => ({
+        type: prop,
         data,
-        // @ts-ignore
         map: map(prop, data),
       }),
     }
